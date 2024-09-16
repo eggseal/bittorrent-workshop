@@ -24,25 +24,40 @@ class TrackerServiceServicer(tracker_pb2_grpc.TrackerServiceServicer):
         print(self.info)
         return tracker_pb2.RegisterPeerResponse(success=True)
     
+    def DeregisterPeer(self, request, context):
+        peer_address = request.peer_address
+        file_info = request.file_info
+        print(f"Deregistering peer: {peer_address}")
+
+        for file in file_info:
+            for piece in file.pieces:
+                number = piece.number
+                if number not in self.info or peer_address not in self.info[number]: continue
+                self.info[number].remove(peer_address)
+                print(f"Removed {peer_address} from piece {number}")
+
+                if self.info[number]: continue
+                del self.info[number]
+                print(f"No peers left for piece {number}, removed from tracker")
+
+        print(self.info)
+        return tracker_pb2.RegisterPeerResponse(success=True)
+
+    
     def GetFilePieces(self, request, context):
         try:
-            print("H")
-            res = tracker_pb2.GetFilePiecesResponse()  # Create the response message
-            print("H")
+            res = tracker_pb2.GetFilePiecesResponse() 
             
             for number, peers in self.info.items():
-                addresses = tracker_pb2.PeerAddresses()  # Create a new PeerAddresses message
-                
-                # Use add() method to append each peer address
+                addresses = tracker_pb2.PeerAddresses()
                 for peer in peers:
                     print(peer)
-                    addresses.addresses.append(peer)  # Correct way to add address to the repeated field
+                    addresses.addresses.append(peer) 
 
-                res.pieces[number].CopyFrom(addresses)  # Assign to the map using CopyFrom
-            print(res)  # Print the entire response for debugging
+                res.pieces[number].CopyFrom(addresses)
         except Exception as e:
-            print(f"Error: {e}")  # Print any errors that occur
-        return res  # Return the constructed response
+            print(f"Error: {e}") 
+        return res
 
 
 def serve():

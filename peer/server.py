@@ -5,7 +5,7 @@ from concurrent import futures
 import tracker_pb2 
 import tracker_pb2_grpc
 
-PEER_NUMBER = 2  # Starts from 1
+PEER_NUMBER = 1  # Starts from 1
 PEER_PORT = 50050 + PEER_NUMBER
 TRACKER_ADDRESS = "localhost:50050"
 
@@ -33,15 +33,11 @@ def register_peer_with_tracker(peer_address, file_info):
         
         file_info_messages.append(file_info_message)
     
-    # Create a RegisterPeerRequest message
     register_request = tracker_pb2.RegisterPeerRequest(
         peer_address=peer_address,
         file_info=file_info_messages   
     )
-    print(register_request)
-
-    # Debug print to see what is being sent
-    print(f"Registering peer with request: {register_request}")  # Debug print
+    print(f"Registering peer with request: {register_request}")
     
     try:
         response = stub.RegisterPeer(register_request)
@@ -54,6 +50,49 @@ def register_peer_with_tracker(peer_address, file_info):
     except grpc.RpcError as e:
         print(f"gRPC error occurred: {e.code()} - {e.details()}")
         return False
+    
+def deregister_peer_with_tracker(peer_address, file_info):
+    channel = grpc.insecure_channel(TRACKER_ADDRESS)
+    stub = tracker_pb2_grpc.TrackerServiceStub(channel)
+
+    # Convert the JSON file_info to protobuf messages
+    file_info_messages = []
+    for file_entry in file_info:
+        print(f"Processing file entry for deregistration: {file_entry}")
+
+        # Ensure pieces are added as a list
+        pieces = [
+            tracker_pb2.FilePiece(number=piece['number'], hash=piece['hash'])
+            for piece in file_entry['pieces']
+        ]
+
+        # Create the FileInfo message with the pieces list
+        file_info_message = tracker_pb2.FileInfo(
+            file_name=file_entry['file_name'], 
+            total=file_entry['total'], 
+            pieces=pieces
+        )
+
+        file_info_messages.append(file_info_message)
+
+    deregister_request = tracker_pb2.RegisterPeerRequest(
+        peer_address=peer_address,
+        file_info=file_info_messages
+    )
+    print(f"Deregistering peer with request: {deregister_request}")
+
+    try:
+        response = stub.DeregisterPeer(deregister_request)
+        if response.success:
+            print(f"Successfully deregistered peer {peer_address} from tracker.")
+            return True
+        else:
+            print(f"Failed to deregister peer {peer_address} from tracker.")
+            return False
+    except grpc.RpcError as e:
+        print(f"gRPC error occurred: {e.code()} - {e.details()}")
+        return False
+
 
 class PeerService(tracker_pb2_grpc.PeerServiceServicer):
     def __init__(self, file_pieces):
@@ -99,10 +138,10 @@ def main():
     
     # Register this peer with the tracker
     register_peer_with_tracker(peer_address, file_info['file_info'])
-    serve_peer_server(file_info['file_info'])
+    try:
+        serve_peer_server(file_info['file_info'])
+    except KeyboardInterrupt:
+        deregister_peer_with_tracker(peer_address, file_info['file_info'])
     
-    # Serve the peer server to respond to piece requests from other peers
-    
-
 if __name__ == "__main__":
     main()

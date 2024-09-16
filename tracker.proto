@@ -66,6 +66,7 @@ message DownloadPieceResponse {
 // Service for the tracker
 service TrackerService {
     rpc RegisterPeer(RegisterPeerRequest) returns (RegisterPeerResponse);
+    rpc DeregisterPeer(RegisterPeerRequest) returns (RegisterPeerResponse);
     rpc GetFilePieces(GetFilePiecesRequest) returns (GetFilePiecesResponse);
 }
 
