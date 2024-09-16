@@ -5,7 +5,8 @@ from concurrent import futures
 import tracker_pb2 
 import tracker_pb2_grpc
 
-PEER_PORT = 50051
+PEER_NUMBER = 2  # Starts from 1
+PEER_PORT = 50050 + PEER_NUMBER
 TRACKER_ADDRESS = "localhost:50050"
 
 def register_peer_with_tracker(peer_address, file_info):
@@ -91,16 +92,17 @@ def load_file_info(json_filename):
 # Main function to register peer and start the peer server
 def main():
     # Load the file pieces info (from a JSON file)
-    file_info = load_file_info('./res/peer-1.json')  # Modify with your metadata file name
+    file_info = load_file_info(f'./res/peer-{PEER_NUMBER}.json')  # Modify with your metadata file name
     
     # Peer address (could be its IP or 'localhost')
     peer_address = f"localhost:{PEER_PORT}"
     
     # Register this peer with the tracker
     register_peer_with_tracker(peer_address, file_info['file_info'])
+    serve_peer_server(file_info['file_info'])
     
     # Serve the peer server to respond to piece requests from other peers
-    serve_peer_server(file_info['file_info'])
+    
 
 if __name__ == "__main__":
     main()
