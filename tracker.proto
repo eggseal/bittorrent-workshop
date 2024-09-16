@@ -1,0 +1,70 @@
+syntax = "proto3";
+package tracker;
+
+// Information about each file piece
+message FilePiece {
+    int32 number = 1;
+    string hash = 2;
+}
+
+// Pieces of a file that a client holds
+message FileInfo {
+    string file_name = 1;
+    int32 total = 2;
+    repeated FilePiece pieces = 3;
+}
+
+// Request message for a client to register as a peer
+message RegisterPeerRequest {
+    string peer_address = 1;
+    repeated FileInfo file_info = 2;
+}
+
+// Response sent by the server after a client registers
+message RegisterPeerResponse {
+    bool success = 1;
+}
+
+// Request to tracker to receive the address of all pieces for a file
+message GetFilePiecesRequest {
+    string file_name = 1;
+}
+
+// Response to client that maps all the pieces to different peer addresses
+message GetFilePiecesResponse {
+    map<int32, string> pieces = 1; 
+}
+
+// Request from one peer to another to check if they have a specific piece
+message PieceRequest {
+    string file_name = 1;
+    int32 piece_number = 2;
+}
+
+// Response to confirm if the peer holds the requested piece
+message PieceResponse {
+    bool has_piece = 1;
+}
+
+// Request to download a piece from a peer
+message DownloadPieceRequest {
+    string file_name = 1;
+    int32 piece_number = 2;
+}
+
+// Response containing the actual file piece data
+message DownloadPieceResponse {
+    bytes data = 1;  // The actual piece data in binary format
+}
+
+// Service for the tracker
+service TrackerService {
+    rpc RegisterPeer(RegisterPeerRequest) returns (RegisterPeerResponse);
+    rpc GetFilePieces(GetFilePiecesRequest) returns (GetFilePiecesResponse);
+}
+
+// Service for the peer-to-peer communication
+service PeerService {
+    rpc HasPiece(PieceRequest) returns (PieceResponse);  // Peer checks if it has a specific piece
+    rpc DownloadPiece(DownloadPieceRequest) returns (DownloadPieceResponse);  // Peer downloads the actual file piece
+}

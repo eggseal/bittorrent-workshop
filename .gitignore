@@ -30,8 +30,8 @@ var/
 *.spec
 
 # gRPC generated files (for proto version)
-*.pb2.py
-*.pb2_grpc.py
+*_pb2.py
+*_pb2_grpc.py
 
 # Log files
 *.log

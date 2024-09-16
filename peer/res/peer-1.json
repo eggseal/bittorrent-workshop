@@ -1,0 +1,18 @@
+{
+  "file_info": [
+    {
+      "file_name": "shakira.mp3",
+      "total": 2,
+      "pieces": [
+        {
+          "number": 1,
+          "hash": "abcd1234"
+        },
+        {
+          "number": 2,
+          "hash": "efgh5678"
+        }
+      ]
+    }
+  ]
+}
