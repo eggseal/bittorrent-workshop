@@ -66,42 +66,29 @@ def main(file_name, tracker_address):
 
             # Update the index for the next round-robin assignment
             current_indices[piece_number] = (index + 1) % len(peers)
-# A dictionary to keep track of the current index for each piece
-current_indices = {}
-
+            
 def main(file_name, tracker_address):
     # Fetch the metadata from the web server
     metadata = get_file_metadata(file_name)
     file_name = metadata["file_name"]
-
+    
     # Step 1: Contact the tracker to get the list of peers
     piece_owners = get_peers_from_tracker(tracker_address, file_name)
-
+    
     # Step 2: For each piece, request from peers
     for piece in metadata["pieces"]:
         piece_number = piece["number"]
         peers = piece_owners.get(piece_number, [])
 
-        # Initialize the index for this piece if it doesn't exist
-        if piece_number not in current_indices:
-            current_indices[piece_number] = 0
-
-        # Step 3: Use round robin to assign a peer for the request
-        if peers:  # Only proceed if there are available peers
-            print(peers)
-            index = current_indices[piece_number]
-            peer_address = peers.addresses[index]  # Get the current peer based on the index
-
+        # Step 3: Try each peer to see if they have the piece
+        for peer_address in peers.addresses:
             print(f"Requesting piece {piece_number} from {peer_address}...")
             has_piece = request_piece_from_peer(peer_address, file_name, piece_number)
-
+            
             if has_piece: 
                 print(f"Peer {peer_address} confirmed having piece {piece_number}")
             else: 
                 print(f"Peer {peer_address} does not have piece {piece_number}")
-
-            # Update the index for the next round-robin assignment
-            current_indices[piece_number] = (index + 1) % len(peers.addresses)
 
 
 if __name__ == "__main__":

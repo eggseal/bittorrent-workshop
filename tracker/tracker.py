@@ -10,6 +10,7 @@ class TrackerServiceServicer(tracker_pb2_grpc.TrackerServiceServicer):
 
     def __init__(self) -> None:
         self.info = {}
+        self.rr_index = {}
 
     def RegisterPeer(self, request, context):
         peer_address = request.peer_address
@@ -20,6 +21,7 @@ class TrackerServiceServicer(tracker_pb2_grpc.TrackerServiceServicer):
                 number = piece.number
                 if number not in self.info:
                     self.info[number] = []
+                    self.rr_index[number] = 0
                 self.info[number].append(peer_address)
         print(self.info)
         return tracker_pb2.RegisterPeerResponse(success=True)
@@ -34,25 +36,28 @@ class TrackerServiceServicer(tracker_pb2_grpc.TrackerServiceServicer):
                 number = piece.number
                 if number not in self.info or peer_address not in self.info[number]: continue
                 self.info[number].remove(peer_address)
+                self.rr_index[number].remove(peer_address)
                 print(f"Removed {peer_address} from piece {number}")
 
                 if self.info[number]: continue
                 del self.info[number]
+                del self.rr_index[number]
                 print(f"No peers left for piece {number}, removed from tracker")
 
         print(self.info)
         return tracker_pb2.RegisterPeerResponse(success=True)
 
-    
     def GetFilePieces(self, request, context):
         try:
             res = tracker_pb2.GetFilePiecesResponse() 
             
             for number, peers in self.info.items():
+                curr_idx = self.rr_index[number]
+                sel_peer = peers[curr_idx]
+                self.rr_index[number] = (curr_idx + 1) % len(peers)
+
                 addresses = tracker_pb2.PeerAddresses()
-                for peer in peers:
-                    print(peer)
-                    addresses.addresses.append(peer) 
+                addresses.addresses.append(sel_peer)
 
                 res.pieces[number].CopyFrom(addresses)
         except Exception as e:
