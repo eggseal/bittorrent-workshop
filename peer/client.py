@@ -3,8 +3,11 @@ import requests
 import tracker_pb2
 import tracker_pb2_grpc
 
+TRACKER_ADDRESS = 'localhost:50050'
+WEB_SERVER_ADDRESS = 'localhost:5000'
+
 def get_file_metadata(file_name):
-    response = requests.get(f"http://localhost:5000/files/{file_name}")
+    response = requests.get(f"http://{WEB_SERVER_ADDRESS}/files/{file_name}")
     
     if response.status_code == 200:
         return response.json()
@@ -92,7 +95,7 @@ def main(file_name, tracker_address):
 
 
 if __name__ == "__main__":
-    tracker_address = "localhost:50050"
+    tracker_address = TRACKER_ADDRESS
     
     while True:
         file_name = input("Download File: ")
